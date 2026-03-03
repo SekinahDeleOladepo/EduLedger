@@ -1,4 +1,6 @@
-﻿namespace EduLedger.Data.DTOs.UserDTOs
+﻿using EduLedger.Entitites.Models;
+
+namespace EduLedger.Data.DTOs.UserDTOs
 {
     public class LoginResponseDTO
     {

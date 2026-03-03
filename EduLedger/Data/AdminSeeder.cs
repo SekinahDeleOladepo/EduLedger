@@ -1,30 +1,36 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using EduLedger.Entitites.Models;
+using Humanizer;
+using Microsoft.AspNetCore.Identity;
 
 namespace EduLedger.Data
 {
-    public class AdminSeeder
+    public static class AdminSeeder
     {
-        public static async Task SeedAdminAsync(
-       UserManager<ApplicationUser> userManager)
+        private const string AdminEmail = "admin@eduledger.com";
+        private const string AdminPassword = "Admin@123";
+        private const string AdminRole = "Admin";
+
+        public static async Task SeedAdminAsync(UserManager<ApplicationUser> userManager)
         {
-            var adminEmail = "admin@eduledger.com";
+            var existingAdmin = await userManager.FindByEmailAsync(AdminEmail);
 
-            if (await userManager.FindByEmailAsync(adminEmail) == null)
+            if (existingAdmin != null)
+                return;
+
+            var admin = new ApplicationUser
             {
-                var admin = new ApplicationUser
-                {
-                    UserName = adminEmail,
-                    Email = adminEmail,
-                    EmailConfirmed = true
-                };
+                UserName = AdminEmail,
+                Email = AdminEmail,
+                EmailConfirmed = true,
+               
+            };
 
-                var result = await userManager.CreateAsync(admin, "Admin@123");
+            var result = await userManager.CreateAsync(admin, AdminPassword);
 
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(admin, "Admin");
-                }
-            }
+            if (!result.Succeeded)
+                return;
+
+            await userManager.AddToRoleAsync(admin, AdminRole);
         }
     }
 }

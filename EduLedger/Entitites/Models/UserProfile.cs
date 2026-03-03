@@ -1,4 +1,6 @@
-﻿namespace EduLedger.Data
+﻿using EduLedger.Data;
+
+namespace EduLedger.Entitites.Models
 {
     public class UserProfile : Base
     {

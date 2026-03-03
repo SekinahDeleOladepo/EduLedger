@@ -2,13 +2,18 @@
 
 namespace EduLedger.Data
 {
-    public class RoleSeeder
+    public static class RoleSeeder
     {
+        private static readonly string[] Roles =
+        {
+            "Admin",
+            "Instructor",
+            "Student"
+        };
+
         public static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
-            string[] roles = { "Admin", "Instructor", "Student" };
-
-            foreach (var role in roles)
+            foreach (var role in Roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
                 {

@@ -4,6 +4,7 @@ using EduLedger.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EduLedger.Migrations
 {
     [DbContext(typeof(EduLedgerDBContext))]
-    partial class EduLedgerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260213092133_FixCourseUserRelationships")]
+    partial class FixCourseUserRelationships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -221,64 +224,6 @@ namespace EduLedger.Migrations
                     b.ToTable("UserProfiles");
                 });
 
-            modelBuilder.Entity("EduLedger.Entitites.AcademicRecord", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<double>("CA1")
-                        .HasColumnType("float");
-
-                    b.Property<double>("CA2")
-                        .HasColumnType("float");
-
-                    b.Property<int>("CourseId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<double>("Exam")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Grade")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Session")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("StudentId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Term")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<double>("TotalScore")
-                        .HasColumnType("float");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
-
-                    b.HasIndex("StudentId", "CourseId", "Session", "Term")
-                        .IsUnique();
-
-                    b.ToTable("AcademicRecords");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -465,25 +410,6 @@ namespace EduLedger.Migrations
                     b.Navigation("ApplicationUser");
                 });
 
-            modelBuilder.Entity("EduLedger.Entitites.AcademicRecord", b =>
-                {
-                    b.HasOne("EduLedger.Data.Course", "Course")
-                        .WithMany("AcademicRecords")
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EduLedger.Data.ApplicationUser", "Student")
-                        .WithMany("AcademicRecords")
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -537,8 +463,6 @@ namespace EduLedger.Migrations
 
             modelBuilder.Entity("EduLedger.Data.ApplicationUser", b =>
                 {
-                    b.Navigation("AcademicRecords");
-
                     b.Navigation("CoursesTaught");
 
                     b.Navigation("UserProfile")
@@ -550,11 +474,6 @@ namespace EduLedger.Migrations
                     b.Navigation("Courses");
 
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("EduLedger.Data.Course", b =>
-                {
-                    b.Navigation("AcademicRecords");
                 });
 #pragma warning restore 612, 618
         }

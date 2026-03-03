@@ -1,6 +1,10 @@
-﻿using EduLedger.Data;
+﻿using Azure;
+using EduLedger.Data;
 using EduLedger.Data.DTOs.ClassLevelDTOs;
 using EduLedger.Entitites.DTOs.ClassLevelDTOs;
+using EduLedger.Entitites.Models;
+using EduLedger.Repository;
+using EduLedger.Repository.IRepository;
 using Humanizer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -18,17 +22,20 @@ namespace EduLedger.Controllers
     public class ClassLevelsController : ControllerBase
     {
         private readonly EduLedgerDBContext _context;
+        private readonly IClassLevelRepository _classLevelRepository;
 
-        public ClassLevelsController(EduLedgerDBContext context)
+        public ClassLevelsController(EduLedgerDBContext context, IClassLevelRepository classLevelRepository)
         {
             _context = context;
+            _classLevelRepository = classLevelRepository;
         }
 
         // GET: api/ClassLevels
+        [Authorize(Roles = "Admin")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ClassLevel>>> GetClassLevels()
+        public async Task<ActionResult<IEnumerable<ClassLevel>>> GetAllClassLevels()
         {
-            var classLevels = await _context.Courses.Where(x => x.IsActive).ToListAsync();
+            var classLevels = await _context.ClassLevels.Where(x => x.IsActive).ToListAsync();
             return classLevels;
         }
 
@@ -36,70 +43,40 @@ namespace EduLedger.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ClassLevel>> GetClassLevel(int id)
         {
-            var classLevel = await _context.Courses.Where(x => x.IsActive).FirstOrDefaultAsync(u => u.Id == id);
+            var response = await _classLevelRepository.GetClassById(id);
+            if (!response.Status) return BadRequest(response);
+            return Ok(response);
 
-            if (classLevel == null)
-            {
-                return NotFound();
-            }
-
-            return classLevel;
         }
 
         // PUT: api/ClassLevels/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateClassLevel(int id,UpdateClassLevelDTO updateClass)
         {
-            var classLevel = await _context.Courses.FindAsync(id);
-
-            if (classLevel == null || !classLevel.IsActive)
-                return NotFound();
-
-            classLevel.Name = updateClass.Name;
-            classLevel.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-            _context.Entry(classLevel).State = EntityState.Modified;
-
-
-            return NoContent();
-            
+            var response = await _classLevelRepository.UpdateClass(id, updateClass);
+            if (!response.Status) return BadRequest(response);
+            return Ok(response);
         }
 
         // POST: api/ClassLevels
-        [HttpPost]
-        public async Task<ActionResult<ClassLevel>> CreateClassLevel(CreateClassDTO createClass)
+        //Authorize(Roles = "Admin")]
+        [HttpPost("create-classlevel")]
+        public async Task<IActionResult> CreateClassLevel(CreateClassDTO createClass)
         {
-            var exists = await _context.Courses
-            .AnyAsync(x => x.Name == createClass.Name && x.IsActive);
+            var response = await _classLevelRepository.CreateClass(createClass);
+            if (!response.Status) return BadRequest(response);
+            return Ok(response);
 
-            if (exists)
-                return BadRequest("Class level already exists");
-
-            var classLevel = new ClassLevel
-            {
-                Name = createClass.Name
-            };
-            _context.Courses.Add(classLevel);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetClassLevel", new { id = classLevel.Id }, classLevel);
+            
         }
 
         // DELETE: api/ClassLevels/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClassLevel(int id)
         {
-            var classLevel = await _context.Courses.FindAsync(id);
-            if (classLevel == null || !classLevel.IsActive)
-            {
-                return NotFound();
-            }
-
-           classLevel.IsActive = false;
-            classLevel.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-            return NoContent();
+            var response = await _classLevelRepository.DeleteClass(id);
+            if (!response.Status) return BadRequest(response);
+            return Ok(response);
         }
         [HttpPost("{classLevelId}/assign-student/{userId}")]
         [Authorize(Roles = "Admin")]
@@ -107,17 +84,8 @@ namespace EduLedger.Controllers
     int classLevelId,
     string userId)
         {
-            var classLevel = await _context.Courses
-                            .FirstOrDefaultAsync(x => x.Id == classLevelId && x.IsActive);
-            if (classLevel == null)
-                return NotFound("Class level not found");
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                return NotFound("User not found");
-            user.ClassLevelId = classLevelId;
-            await _context.SaveChangesAsync();
-
+            var response = await _classLevelRepository.AssignStudentToClassLevel(classLevelId, userId);
+            if (!response.Status) return BadRequest(response);
             return Ok("Student assigned successfully");
         }
     }

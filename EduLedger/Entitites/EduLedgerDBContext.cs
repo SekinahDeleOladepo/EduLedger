@@ -1,14 +1,16 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using EduLedger.Entitites.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace EduLedger.Data
 {
-    public class EduLedgerDBContext :  IdentityDbContext<ApplicationUser> 
+    public class EduLedgerDBContext : IdentityDbContext<ApplicationUser>
     {
-        public EduLedgerDBContext(DbContextOptions<EduLedgerDBContext> options) : base(options)
+        public EduLedgerDBContext(DbContextOptions<EduLedgerDBContext> options)
+            : base(options)
         {
-            
         }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -34,16 +36,42 @@ namespace EduLedger.Data
                 .HasForeignKey(c => c.ClassLevelId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // 4️⃣ ApplicationUser ↔ Course (Many-to-Many)
-            builder.Entity<ApplicationUser>()
-                .HasMany(u => u.Courses)
-                .WithMany(c => c.Users)
-                .UsingEntity(j => j.ToTable("UserCourses"));
+            // 4️⃣ Instructor ↔ Course (One-to-Many)
+            builder.Entity<Course>()
+                .HasOne(c => c.Instructor)
+                .WithMany(u => u.CoursesTaught)
+                .HasForeignKey(c => c.InstructorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 5️⃣ Student ↔ Course (Many-to-Many)
+            builder.Entity<Course>()
+                .HasMany(c => c.Students)
+                .WithMany(u => u.EnrolledCourses)
+                .UsingEntity(j => j.ToTable("StudentCourses"));
+
+            // 6️⃣ AcademicRecord ↔ Student (One-to-Many)
+            builder.Entity<AcademicRecord>()
+                .HasOne(ar => ar.Student)
+                .WithMany(u => u.AcademicRecords)
+                .HasForeignKey(ar => ar.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 7️⃣ AcademicRecord ↔ Course (One-to-Many)
+            builder.Entity<AcademicRecord>()
+                .HasOne(ar => ar.Course)
+                .WithMany(c => c.AcademicRecords)
+                .HasForeignKey(ar => ar.CourseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 8️⃣ Prevent duplicate academic records per term
+            builder.Entity<AcademicRecord>()
+                .HasIndex(ar => new { ar.StudentId, ar.CourseId, ar.Session, ar.Term })
+                .IsUnique();
         }
 
+        public DbSet<AcademicRecord> AcademicRecords { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<ClassLevel> ClassLevels { get; set; }
         public DbSet<Course> Courses { get; set; }
-
     }
 }
